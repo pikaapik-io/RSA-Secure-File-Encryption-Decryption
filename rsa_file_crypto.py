@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""
-RSA-Based Secure File Encryption & Decryption
----------------------------------------------
-Semua tahapan RSA ditulis manual (tanpa library kriptografi):
-  1. Pembangkitan bilangan prima  (Miller-Rabin)
-  2. Pembangkitan kunci           (n, phi, e, d via Extended Euclid)
-  3. Enkripsi file                (padding + c = m^e mod n, per blok)
-  4. Dekripsi file                (m = c^d mod n + hapus padding)
-
-Hanya memakai modul bawaan Python 'os' (os.urandom) untuk sumber acak
-dan 'sys' untuk argumen. Tipe int Python sudah mendukung bilangan besar.
-"""
 
 import os
 import sys
