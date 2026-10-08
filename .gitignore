@@ -1,0 +1,6 @@
+﻿private.key
+public.key
+*.enc
+tes_hasil.txt
+hasil_dekripsi.out
+__pycache__/
