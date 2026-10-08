@@ -14,6 +14,28 @@ Program ini merupakan implementasi enkripsi dan dekripsi file berbasis RSA yang 
 - Mendekripsi file terenkripsi kembali ke file asli
 - Menggunakan menu interaktif di terminal
 
+## Penjelasan kode sederhana
+
+Kode ini dibuat dalam beberapa bagian utama agar alur kerja RSA mudah dipahami:
+
+- `random_bits()` dan `random_range()`: menghasilkan bilangan acak yang dibutuhkan dalam proses pembuatan kunci.
+- `is_prime()` dan `generate_prime()`: mengecek keprimaan dan menghasilkan bilangan prima dengan metode Miller-Rabin.
+- `generate_keys()`: membuat pasangan kunci RSA, yaitu `n`, `e`, dan `d` melalui proses matematika RSA.
+- `save_key()` dan `load_key()`: menyimpan serta membaca file kunci publik dan privat.
+- `pad_block()` dan `unpad_block()`: menambahkan dan menghapus padding agar data aman dan sesuai format RSA.
+- `encrypt_file()`: membagi file menjadi blok data, lalu mengenkripsi tiap blok dengan rumus $c = m^e \bmod n$.
+- `decrypt_file()`: mendekripsi balik tiap blok menggunakan $m = c^d \bmod n$, lalu menghapus padding.
+- `main()`: menampilkan menu interaktif untuk user memilih generate key, encrypt, atau decrypt.
+
+Inti dari program ini adalah proses RSA manual:
+
+1. buat bilangan prima
+2. hitung modulus dan phi
+3. pilih eksponen publik `e`
+4. hitung private exponent `d`
+5. enkripsi file dengan blok data
+6. dekripsi file dengan kunci privat
+
 ## Persyaratan
 
 Pastikan Python sudah terinstal di komputer Anda.
