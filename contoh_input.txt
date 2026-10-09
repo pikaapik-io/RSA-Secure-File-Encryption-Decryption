@@ -1,0 +1,9 @@
+Contoh file untuk RSA File Encryption.
+
+Gunakan file ini untuk mencoba alur:
+1. Generate RSA key pair.
+2. Pilih Encrypt file dan upload file ini.
+3. Download file .enc.
+4. Pilih Decrypt file dan gunakan private key yang sama.
+
+Teks ini sengaja sederhana agar hasil dekripsi mudah dibandingkan.

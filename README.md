@@ -1,55 +1,69 @@
-# RSA File Encryption / Decryption
+# RSA File Encryption & Decryption
 
-Program ini merupakan implementasi enkripsi dan dekripsi file berbasis RSA yang dibuat secara manual tanpa menggunakan library kriptografi pihak ketiga. Program ini menggunakan operasi RSA secara langsung dengan:
+## Deskripsi
 
+Program ini dibuat untuk mempelajari proses enkripsi dan dekripsi file
+menggunakan algoritma RSA. Perhitungan RSA dibuat secara manual pada
+`rsa_file_crypto.py`, mulai dari pembangkitan bilangan prima, pembentukan
+kunci, padding, sampai proses enkripsi dan dekripsi.
+
+Repository ini memiliki dua cara penggunaan:
+
+- versi web melalui Flask;
+- versi terminal melalui `rsa_file_crypto.py`.
+
+Keduanya menggunakan fungsi RSA yang sama. Versi web hanya menambahkan
+antarmuka browser melalui `app.py`.
 
 ## Anggota Tim
 
-| No | Nama                   | NRP        |
-| -- | ---------------------- | ---------- |
-| 1  | Kanafira Vanesha Putri | 5027241010 |
-| 2  | Fika Arka Nuriyah      | 5027241071 |
-| 3  | S. Farhan Baig         | 5027241097 |
+| No. | Nama | NRP |
+|---|---|---|
+| 1 | Kanafira Vanesha Putri | 5027241010 |
+| 2 | Fika Arka Nuriyah | 5027241071 |
+| 3 | S. Farhan Baig | 5027241097 |
 
-- pembangkitan bilangan prima,
-- pembuatan kunci publik dan privat,
-- padding PKCS#1-like tipe 2,
-- enkripsi/dekripsi per blok file.
+## Versi Web
 
-## Fitur utama
+Versi web dapat digunakan untuk:
 
-- Membuat kunci RSA otomatis: `public.key` dan `private.key`
-- Mengenkripsi file sumber menjadi file `.enc`
-- Mendekripsi file terenkripsi kembali ke file asli
-- Menggunakan menu interaktif di terminal
+- membuat pasangan public key dan private key;
+- mengenkripsi dan mendekripsi file;
+- memasukkan file melalui upload;
+- memasukkan pesan melalui paste text;
+- memasukkan key melalui upload atau paste text;
+- menyalin ciphertext text dalam format Base64.
 
-## Penjelasan kode sederhana
+### Menjalankan
 
-Kode ini dibuat dalam beberapa bagian utama agar alur kerja RSA mudah dipahami:
+```bash
+chmod +x run.sh
+./run.sh
+```
 
-- `random_bits()` dan `random_range()`: menghasilkan bilangan acak yang dibutuhkan dalam proses pembuatan kunci.
-- `is_prime()` dan `generate_prime()`: mengecek keprimaan dan menghasilkan bilangan prima dengan metode Miller-Rabin.
-- `generate_keys()`: membuat pasangan kunci RSA, yaitu `n`, `e`, dan `d` melalui proses matematika RSA.
-- `save_key()` dan `load_key()`: menyimpan serta membaca file kunci publik dan privat.
-- `pad_block()` dan `unpad_block()`: menambahkan dan menghapus padding agar data aman dan sesuai format RSA.
-- `encrypt_file()`: membagi file menjadi blok data, lalu mengenkripsi tiap blok dengan rumus $c = m^e \bmod n$.
-- `decrypt_file()`: mendekripsi balik tiap blok menggunakan $m = c^d \bmod n$, lalu menghapus padding.
-- `main()`: menampilkan menu interaktif untuk user memilih generate key, encrypt, atau decrypt.
+Setelah server berjalan, buka `http://127.0.0.1:5000` pada browser. Script
+tersebut akan menyiapkan virtual environment dan dependency yang diperlukan.
 
-Inti dari program ini adalah proses RSA manual:
+Jika ingin menjalankan server secara langsung:
 
-1. buat bilangan prima
-2. hitung modulus dan phi
-3. pilih eksponen publik `e`
-4. hitung private exponent `d`
-5. enkripsi file dengan blok data
-6. dekripsi file dengan kunci privat
+```bash
+python app.py
+```
 
-## Persyaratan
+Port dapat diubah, misalnya dengan `RSA_PORT=5050 ./run.sh`.
 
-Pastikan Python sudah terinstal di komputer Anda.
+### Alur penggunaan
 
-Contoh menjalankan:
+1. Buat key pair atau masukkan key yang sudah ada.
+2. Pilih Encrypt atau Decrypt.
+3. Pilih upload file atau paste text.
+4. Masukkan public key untuk enkripsi dan private key untuk dekripsi.
+5. Jalankan proses, kemudian download atau salin hasilnya.
+
+## Versi Terminal
+
+Versi terminal tetap tersedia pada `rsa_file_crypto.py` dan dapat dijalankan
+tanpa server web:
 
 ```bash
 python rsa_file_crypto.py
@@ -58,155 +72,63 @@ python rsa_file_crypto.py
 atau:
 
 ```bash
-py rsa_file_crypto.py
+python3 rsa_file_crypto.py
 ```
 
-## Alur pemakaian
-
-Saat program dijalankan, akan muncul menu:
+Menu program:
 
 ```text
-===== RSA FILE ENCRYPTION / DECRYPTION =====
 1. Bangkitkan kunci (public.key & private.key)
 2. Enkripsi file
 3. Dekripsi file
 0. Keluar
 ```
 
-### 1) Membuat kunci RSA
+File `public.key` digunakan saat enkripsi, sedangkan `private.key` digunakan
+saat dekripsi. Contoh file input tersedia pada
+[`contoh_input.txt`](./contoh_input.txt).
 
-Pilih menu `1`.
+Format key yang digunakan adalah dua angka desimal:
 
-Program akan meminta:
+- `public.key`: `n` lalu `e`;
+- `private.key`: `n` lalu `d`.
 
-```text
-Ukuran kunci (bit, min 512) [1024]:
-```
-
-Masukkan ukuran bit, misalnya `1024` atau `2048`.
-
-Setelah selesai, program akan otomatis menyimpan:
-
-- `public.key`
-- `private.key`
-
-> Catatan penting: `private.key` harus dijaga kerahasiaannya. Jangan dibagikan ke siapapun.
-
----
-
-### 2) Mengenkripsi file
-
-Pilih menu `2`.
-
-Program akan meminta input berikut:
+## Struktur Proyek
 
 ```text
-File yang dienkripsi: tes.txt
-File hasil: tes.txt.enc
-File kunci publik: public.key
+.
+├── app.py
+├── rsa_file_crypto.py
+├── templates/index.html
+├── static/app.js
+├── static/styles.css
+├── tests/test_app.py
+├── contoh_input.txt
+├── requirements.txt
+├── run.sh
+└── README.md
 ```
 
-Penjelasan:
+`rsa_file_crypto.py` berisi algoritma RSA dan menu terminal. `app.py` berisi
+backend Flask yang memanggil fungsi dari file tersebut. Folder `templates`
+dan `static` digunakan untuk tampilan web.
 
-- `File yang dienkripsi` = file asli yang ingin diamankan
-- `File hasil` = nama file terenkripsi, biasanya ditulis dengan ekstensi `.enc`
-- `File kunci publik` = file `public.key` yang telah dibuat sebelumnya
-
-Contoh:
-
-```text
-File yang dienkripsi: tes.txt
-File hasil: tes.txt.enc
-File kunci publik: public.key
-```
-
-Setelah selesai, file hasil enkripsi akan dibuat, misalnya:
-
-- `tes.txt.enc`
-
----
-
-### 3) Mendekripsi file
-
-Pilih menu `3`.
-
-Program akan meminta:
-
-```text
-File terenkripsi (.enc): tes.txt.enc
-File hasil dekripsi: hasil_dekripsi.out
-File kunci privat: private.key
-```
-
-Penjelasan:
-
-- `File terenkripsi` = file hasil enkripsi `.enc`
-- `File hasil dekripsi` = lokasi file yang akan dikembalikan ke bentuk aslinya
-- `File kunci privat` = file `private.key`
-
-Contoh:
-
-```text
-File terenkripsi (.enc): tes.txt.enc
-File hasil dekripsi: hasil_dekripsi.out
-File kunci privat: private.key
-```
-
-Jika kunci privat valid, file hasil dekripsi akan dibuat dan isinya akan sama dengan file asli.
-
----
-
-## Contoh alur lengkap
+## Pengujian
 
 ```bash
-python rsa_file_crypto.py
+python -m unittest discover -s tests -v
 ```
 
-Lalu:
+Pengujian mencakup enkripsi-dekripsi file biner, enkripsi-dekripsi text,
+penggunaan key dalam bentuk text, key yang salah, dan token download yang
+tidak valid.
 
-1. Pilih `1` untuk membuat kunci
-2. Pilih `2` untuk mengenkripsi `tes.txt`
-3. Pilih `3` untuk mendekripsi `tes.txt.enc`
+## Catatan
 
----
+Program ini dibuat untuk keperluan akademik. Implementasi RSA dan padding-nya
+ditulis sendiri, sehingga belum ditujukan untuk melindungi data penting pada
+lingkungan produksi. Private key juga harus disimpan dengan baik dan tidak
+dibagikan.
 
-## Catatan keamanan
-
-- Gunakan `public.key` untuk enkripsi.
-- Gunakan `private.key` untuk dekripsi.
-- Jangan membagikan `private.key`.
-- Gunakan ukuran kunci minimal `512` bit, disarankan `1024` atau lebih.
-
-## Struktur file yang umum dibuat
-
-```text
-RSA/
-├── rsa_file_crypto.py
-├── README.md
-├── public.key
-├── private.key
-├── tes.txt
-├── tes.txt.enc
-└── hasil_dekripsi.out
-```
-
-## Troubleshooting
-
-### Error: file tidak ditemukan
-
-Pastikan file input benar-benar ada di folder yang sama dengan program.
-
-### Error: padding tidak valid
-
-Biasanya terjadi karena:
-
-- file yang didekripsi bukan hasil enkripsi dari kunci yang sama,
-- `private.key` tidak sesuai dengan `public.key`,
-- file ciphertext rusak atau tidak lengkap.
-
-### Error: ukuran file cipher tidak sesuai dengan kunci
-
-File terenkripsi kemungkinan sudah rusak atau tidak dibuat dengan ukuran blok yang sesuai.
-
----
-
+Laporan proyek tersedia pada
+[`Laporan Program RSA-Based Secure File Encryption & Decryption - Lengkap.pdf`](./Laporan%20Program%20RSA-Based%20Secure%20File%20Encryption%20%26%20Decryption%20-%20Lengkap.pdf).

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RSA File Encryption</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">CRYPTOGRAPHY WORKSPACE</p>
+      <h1>RSA File Encryption</h1>
+      <p class="lede">A simple workspace for RSA-based file encryption and decryption.</p>
+    </div>
+    <a href="#about-rsa" class="text-link">About RSA</a>
+  </header>
+
+  <main class="layout">
+    <section class="workspace panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">FILE WORKSPACE</p><h2>Protect a file</h2></div>
+        <span class="limit">Uploads up to {{ max_upload_mb }} MB</span>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-mode="encrypt" role="tab">Encrypt file</button>
+        <button class="tab" data-mode="decrypt" role="tab">Decrypt file</button>
+      </div>
+      <div class="input-tabs" role="tablist">
+        <button class="input-tab active" data-input-mode="file" type="button">Upload a file</button>
+        <button class="input-tab" data-input-mode="text" type="button">Paste text</button>
+      </div>
+
+      <form id="file-form">
+        <div id="file-input-panel">
+          <label class="field-label" for="input-file">File to <span id="verb">encrypt</span></label>
+          <label class="dropzone" for="input-file">
+          <input id="input-file" name="input_file" type="file" required>
+          <strong id="file-title">Choose a file</strong>
+          <span id="file-meta">The selected file will stay in the app's private workspace.</span>
+          </label>
+        </div>
+        <div id="text-input-panel" hidden>
+          <label class="field-label" for="input-text">Text to <span id="text-verb">encrypt</span></label>
+          <textarea id="input-text" name="input_text" rows="8" placeholder="Paste text here..."></textarea>
+          <small id="text-help">For text mode, encrypted output is shown as Base64.</small>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label class="field-label">Key</label>
+            <div class="key-input-tabs">
+              <button class="key-input-tab active" data-key-mode="file" type="button">Upload key</button>
+              <button class="key-input-tab" data-key-mode="text" type="button">Paste key</button>
+            </div>
+            <div id="key-file-panel">
+              <input id="key-file" name="public_key" type="file" required>
+            </div>
+            <div id="key-text-panel" hidden>
+              <textarea id="key-text" rows="4" placeholder="Paste n and e/d, one per line"></textarea>
+            </div>
+            <small id="key-help">Use the public key for encryption.</small>
+          </div>
+          <div>
+            <label class="field-label" for="output-name">Output filename</label>
+            <input id="output-name" name="output_name" type="text" placeholder="Optional">
+          </div>
+        </div>
+        <input id="key-id" name="key_id" type="hidden">
+        <input id="input-mode" name="input_mode" type="hidden" value="file">
+        <input id="key-mode" name="key_mode" type="hidden" value="file">
+        <button class="primary-button" id="process-button" type="submit">Encrypt file</button>
+      </form>
+      <div id="operation-status" class="status" hidden></div>
+    </section>
+
+    <aside class="keys panel">
+      <div class="panel-heading"><div><p class="eyebrow">KEY MANAGEMENT</p><h2>Generate a pair</h2></div></div>
+      <p class="muted">Create a public/private pair for this browser session. Keep the private key somewhere safe.</p>
+      <form id="key-form">
+        <label class="field-label" for="key-bits">Key size</label>
+        <select id="key-bits" name="bits"><option value="512">512 bit</option><option value="1024" selected>1024 bit</option><option value="2048">2048 bit</option></select>
+        <button class="secondary-button" type="submit">Generate RSA key pair</button>
+      </form>
+      <div id="key-status" class="status" hidden></div>
+      <div id="key-links" class="key-links" hidden></div>
+      <p class="warning">Academic demonstration only. This manual RSA implementation is not intended for production secrets.</p>
+    </aside>
+  </main>
+
+  <section id="about-rsa" class="about panel">
+    <p class="eyebrow">HOW IT WORKS</p>
+    <h2>Three steps, kept visible</h2>
+    <div class="steps">
+      <div><b>01</b><h3>Key generation</h3><p>Two primes create a public key <code>(n, e)</code> and a private key <code>(n, d)</code>.</p></div>
+      <div><b>02</b><h3>Encryption</h3><p>File blocks are padded and transformed with <code>c = m^e mod n</code>.</p></div>
+      <div><b>03</b><h3>Decryption</h3><p>The private key restores each block with <code>m = c^d mod n</code>.</p></div>
+    </div>
+  </section>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
