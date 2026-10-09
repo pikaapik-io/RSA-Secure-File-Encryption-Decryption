@@ -2,6 +2,15 @@
 
 Program ini merupakan implementasi enkripsi dan dekripsi file berbasis RSA yang dibuat secara manual tanpa menggunakan library kriptografi pihak ketiga. Program ini menggunakan operasi RSA secara langsung dengan:
 
+
+## Anggota Tim
+
+| No | Nama                   | NRP        |
+| -- | ---------------------- | ---------- |
+| 1  | Kanafira Vanesha Putri | 5027241010 |
+| 2  | Fika Arka Nuriyah      | 5027241071 |
+| 3  | S. Farhan Baig         | 5027241097 |
+
 - pembangkitan bilangan prima,
 - pembuatan kunci publik dan privat,
 - padding PKCS#1-like tipe 2,
