@@ -106,7 +106,8 @@ Format key yang digunakan adalah dua angka desimal:
 ├── contoh_input.txt
 ├── requirements.txt
 ├── run.sh
-└── README.md
+├── README.md
+└── PENJELASAN_RSA.md
 ```
 
 `rsa_file_crypto.py` berisi algoritma RSA dan menu terminal. `app.py` berisi

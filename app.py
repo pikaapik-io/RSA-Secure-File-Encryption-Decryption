@@ -1,55 +1,71 @@
 #!/usr/bin/env python3
 
-"""Small web interface for the educational RSA implementation."""
+"""Bagian web dari program RSA.
+
+File ini mengurus form, upload, download, lalu memanggil fungsi RSA di file
+lain. Jadi, rumus RSA-nya ada di rsa_file_crypto.py, bukan di sini.
+"""
 
 from __future__ import annotations
 
-import os
-import base64
-import shutil
-import tempfile
-import uuid
-from pathlib import Path
-from typing import BinaryIO
+import os  # Membaca pengaturan host, port, dan debug.
+import base64  # Mengubah data biner menjadi teks yang bisa di-copy.
+import shutil  # Menghapus folder sementara.
+import tempfile  # Membuat folder sementara untuk satu proses.
+import uuid  # Membuat ID dan token yang unik.
+from pathlib import Path  # Memudahkan pengelolaan alamat file.
+from typing import BinaryIO  # Menjelaskan tipe file upload.
 
 from flask import Flask, jsonify, render_template, request, send_file
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename  # Mencegah nama file berisi path traversal.
 
 import rsa_file_crypto as rsa
 
 
+# Mulai dari folder tempat file ini berada supaya lokasi data tetap benar
+# walaupun program dijalankan dari folder lain.
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 KEY_DIR = DATA_DIR / "keys"
+
+# Batas upload 16 MiB. Kalau tidak dibatasi, file besar bisa memenuhi server.
 MAX_UPLOAD_BYTES = 16 * 1024 * 1024
 
-app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
+app = Flask(__name__)  # Membuat aplikasi Flask.
+app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES  # Membatasi ukuran upload.
+
+# Menyimpan token dan alamat file hasil. Browser cukup menerima tokennya saja.
 DOWNLOADS: dict[str, Path] = {}
 
 
 def _json_error(message: str, status: int = 400):
+    # Semua error API dibuat dengan format yang sama agar mudah dibaca JavaScript.
     return jsonify({"ok": False, "error": message}), status
 
 
 def _register_download(path: Path) -> str:
+    # Token acak ini dipakai sebagai nama sementara di URL download.
     token = uuid.uuid4().hex
     DOWNLOADS[token] = path.resolve()
     return token
 
 
 def _save_upload(upload: BinaryIO, directory: Path, fallback: str) -> Path:
+    # Bersihkan nama file supaya input seperti ../file tidak bisa dipakai
+    # untuk keluar dari folder kerja.
     filename = secure_filename(upload.filename or "")
     if not filename:
         raise ValueError(f"Nama {fallback} tidak valid.")
     path = directory / filename
-    upload.save(path)
+    upload.save(path)  # Simpan isi upload ke folder kerja request.
     return path
 
 
 def _key_from_request(directory: Path, field: str, key_type: str) -> tuple[int, int]:
+    # Kunci bisa diambil dari server, ditempel sebagai teks, atau di-upload.
     key_id = request.form.get(f"{key_type}_key_id", request.form.get("key_id", "")).strip()
     if key_id:
+        # ID kunci dibuat dari UUID hex, jadi bentuk yang diharapkan 32 karakter.
         if not key_id.isalnum() or len(key_id) != 32:
             raise ValueError("ID kunci tidak valid.")
         suffix = "public" if key_type == "public" else "private"
@@ -60,6 +76,8 @@ def _key_from_request(directory: Path, field: str, key_type: str) -> tuple[int, 
         key_text = request.form.get(f"{key_type}_key_text", "").strip()
         if key_text:
             try:
+                # Isi kunci harus dua angka: n dan e untuk public, atau n dan d
+                # untuk private.
                 values = key_text.split()
                 if len(values) != 2:
                     raise ValueError
@@ -78,27 +96,31 @@ def _key_from_request(directory: Path, field: str, key_type: str) -> tuple[int, 
 
 @app.errorhandler(413)
 def request_too_large(_error):
+    # Fungsi ini dipanggil Flask kalau ukuran upload melewati batas.
     return _json_error("Ukuran upload melebihi batas 16 MB.", 413)
 
 
 @app.get("/")
 def index():
+    # Kirim batas ini ke halaman supaya tulisan di UI sesuai dengan server.
     return render_template("index.html", max_upload_mb=MAX_UPLOAD_BYTES // (1024 * 1024))
 
 
 @app.post("/api/keys")
 def generate_key_pair():
+    # Buat pasangan public-private key dan simpan supaya bisa dipakai lagi.
     try:
-        bits = int(request.form.get("bits", "1024"))
+        bits = int(request.form.get("bits", "1024"))  # Ukuran n dalam bit.
         if bits < 512:
             raise ValueError("Ukuran kunci minimal 512 bit.")
         public_key, private_key = rsa.generate_keys(bits, verbose=False)
         KEY_DIR.mkdir(parents=True, exist_ok=True)
-        key_id = uuid.uuid4().hex
+        key_id = uuid.uuid4().hex  # ID untuk mencari pasangan kunci ini.
         public_path = KEY_DIR / f"{key_id}.public.key"
         private_path = KEY_DIR / f"{key_id}.private.key"
         rsa.save_key(str(public_path), public_key)
         rsa.save_key(str(private_path), private_key)
+        # Kunci juga dikirim sebagai teks supaya bisa langsung di-copy.
         return jsonify(
             {
                 "ok": True,
@@ -120,14 +142,19 @@ def generate_key_pair():
 
 
 def _process_file(operation: str):
+    # Enkripsi dan dekripsi memakai alur yang sama; yang berbeda hanya operasi
+    # RSA dan jenis kuncinya.
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    # Setiap request mendapat folder sendiri supaya nama file tidak bentrok.
     operation_dir = Path(tempfile.mkdtemp(prefix="rsa-operation-", dir=DATA_DIR))
     try:
         input_path = _input_path(request, operation_dir, operation)
+        # Enkripsi pakai public key (n,e), dekripsi pakai private key (n,d).
         key_type = "public" if operation == "encrypt" else "private"
         key_field = "public_key" if operation == "encrypt" else "private_key"
         key = _key_from_request(operation_dir, key_field, key_type)
 
+        # Nama file hasil juga harus dibersihkan.
         requested_name = secure_filename(request.form.get("output_name", "").strip())
         if not requested_name:
             requested_name = f"{input_path.name}.enc" if operation == "encrypt" else f"{input_path.stem}.decrypted"
@@ -147,6 +174,8 @@ def _process_file(operation: str):
                 "input_name": input_path.name,
                 "output_name": output_path.name,
                 "download_url": f"/download/{token}",
+                # Untuk mode teks, isi hasil dikirim juga. File biner diambil
+                # lewat link download agar isinya tidak berubah.
                 "text_output": (
                     base64.b64encode(output_path.read_bytes()).decode("ascii")
                     if request.form.get("input_mode") == "text" and operation == "encrypt"
@@ -159,19 +188,23 @@ def _process_file(operation: str):
     except (OSError, ValueError) as exc:
         return _json_error(str(exc))
     finally:
-        # Keep successful output files available for downloads; failed requests
-        # have no registered file and can be removed immediately.
+        # Hasil yang sukses tetap disimpan karena masih dibutuhkan saat download.
+        # Folder dari request yang gagal tidak punya token download, jadi aman
+        # untuk langsung dihapus.
         if not any(path.parent == operation_dir for path in DOWNLOADS.values()):
             shutil.rmtree(operation_dir, ignore_errors=True)
 
 
 def _input_path(form_request, operation_dir: Path, operation: str) -> Path:
+    # Teks dibuat menjadi file sementara supaya alurnya sama seperti upload file.
     if form_request.form.get("input_mode", "file") == "text":
         text = form_request.form.get("input_text", "")
         if not text:
             raise ValueError("Masukkan teks terlebih dahulu.")
         input_path = operation_dir / "text-input.txt"
         if operation == "decrypt":
+            # Hasil enkripsi yang ditempel di form berbentuk Base64.
+            # validate=True memastikan teks Base64-nya benar.
             try:
                 input_path.write_bytes(base64.b64decode(text, validate=True))
             except (ValueError, UnicodeError) as exc:
@@ -187,16 +220,19 @@ def _input_path(form_request, operation_dir: Path, operation: str) -> Path:
 
 @app.post("/api/encrypt")
 def encrypt():
+    # Alamat API untuk proses enkripsi.
     return _process_file("encrypt")
 
 
 @app.post("/api/decrypt")
 def decrypt():
+    # Alamat API untuk proses dekripsi.
     return _process_file("decrypt")
 
 
 @app.get("/download/<token>")
 def download(token: str):
+    # Download hanya boleh dilakukan kalau token terdaftar dan file masih ada.
     path = DOWNLOADS.get(token)
     if path is None or not path.is_file():
         return _json_error("File hasil tidak ditemukan atau tautan sudah tidak berlaku.", 404)
@@ -204,6 +240,7 @@ def download(token: str):
 
 
 if __name__ == "__main__":
+    # Bagian ini hanya jalan saat app.py dijalankan langsung.
     DATA_DIR.mkdir(exist_ok=True)
     app.run(
         host=os.environ.get("RSA_HOST", "127.0.0.1"),
