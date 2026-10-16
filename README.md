@@ -170,6 +170,47 @@ flowchart TD
     N --> Z([Selesai])
 ```
 
+### Perpangkatan modular (`mod_pow`)
+
+Enkripsi (`c = m^e mod n`) dan dekripsi (`m = c^d mod n`) sama-sama dihitung
+dengan fungsi `mod_pow(base, exp, mod)`. Fungsi ini memakai metode
+square-and-multiply: `exp` dibaca bit per bit dari kanan, `base` dikuadratkan
+di setiap putaran, dan `result` hanya dikalikan dengan `base` ketika bit
+terakhir `exp` bernilai 1. Setiap hasil perkalian langsung di-modulo agar
+angkanya tetap kecil.
+
+```python
+def mod_pow(base, exp, mod):
+    result = 1
+    base %= mod
+    while exp > 0:
+        if exp & 1:
+            result = (result * base) % mod
+        exp >>= 1
+        base = (base * base) % mod
+    return result
+```
+
+#### Contoh langkah demi langkah: `mod_pow(3, 13, 7)`
+
+Tabel berikut mengikuti isi variabel di setiap putaran loop. Putaran yang
+ditandai ✅ adalah putaran ketika bit terakhir `exp` bernilai 1, sehingga
+`result` ikut berubah.
+
+| Putaran | exp (biner) | Bit kanan | Hitung result | result | base berikutnya |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| Awal | 13 (`1101`) | – | – | 1 | 3 |
+| 1 ✅ | 13 (`1101`) | 1 | 1 × 3 % 7 | **3** | 3 × 3 % 7 = 2 |
+| 2 | 6 (`110`) | 0 | dilewati | 3 | 2 × 2 % 7 = 4 |
+| 3 ✅ | 3 (`11`) | 1 | 3 × 4 % 7 | **5** | 4 × 4 % 7 = 2 |
+| 4 ✅ | 1 (`1`) | 1 | 5 × 2 % 7 | **3** | 2 × 2 % 7 = 4 (tidak dipakai) |
+
+Setelah putaran 4, `exp` menjadi 0 sehingga loop berhenti. Fungsi
+mengembalikan **3**.
+
+> **Cek hasil:** jika dihitung langsung, 3¹³ = 1.594.323, dan
+> 1.594.323 mod 7 = 3. Hasilnya sama dengan `mod_pow` ✓
+
 ## Struktur Proyek
 
 ```text
