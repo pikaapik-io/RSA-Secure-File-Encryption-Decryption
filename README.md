@@ -93,6 +93,83 @@ Format key yang digunakan adalah dua angka desimal:
 - `public.key`: `n` lalu `e`;
 - `private.key`: `n` lalu `d`.
 
+## Alur Kerja RSA
+
+Flowchart berikut menggambarkan proses pada `rsa_file_crypto.py`.
+
+### Pembuatan kunci
+
+Fungsi `generate_keys()` dan `generate_prime()`:
+
+```mermaid
+flowchart TD
+    A([Mulai]) --> B{"Ukuran kunci >= 512 bit?"}
+    B -- Tidak --> X(["Error: ukuran kunci minimal 512 bit"])
+    B -- Ya --> C["Buat kandidat acak bits/2 bit<br/>(bit teratas = 1, ganjil)"]
+    C --> D{"Lolos uji Miller-Rabin<br/>(40 putaran)?"}
+    D -- Tidak --> C
+    D -- Ya --> E["p = kandidat prima"]
+    E --> F["Bangkitkan q dengan cara yang sama"]
+    F --> G{"q == p?"}
+    G -- Ya --> F
+    G -- Tidak --> H["n = p × q"]
+    H --> I["phi = (p − 1) × (q − 1)"]
+    I --> J["e = 65537"]
+    J --> K{"gcd(e, phi) = 1?"}
+    K -- Tidak --> C
+    K -- Ya --> L["d = e⁻¹ mod phi<br/>(Extended Euclid)"]
+    L --> M["Public key = (n, e)<br/>Private key = (n, d)"]
+    M --> N["Simpan ke public.key dan private.key"]
+    N --> Z([Selesai])
+```
+
+### Enkripsi
+
+Fungsi `encrypt_file()` menggunakan public key `(n, e)`:
+
+```mermaid
+flowchart TD
+    A([Mulai]) --> B["Baca public key (n, e)"]
+    B --> C["k = ukuran n dalam byte<br/>max_data = k − 11"]
+    C --> D["Baca seluruh file input sebagai bytes"]
+    D --> E["Jumlah blok = ceil(panjang data / max_data)<br/>(minimal 1 blok)"]
+    E --> F["Ambil potongan data berikutnya<br/>(maksimal max_data byte)"]
+    F --> G["Padding:<br/>00 02 || PS acak tidak nol || 00 || data"]
+    G --> H["Ubah blok bytes menjadi integer m"]
+    H --> I["c = m^e mod n"]
+    I --> J["Ubah c menjadi tepat k byte<br/>lalu tambahkan ke output"]
+    J --> K{"Masih ada blok?"}
+    K -- Ya --> F
+    K -- Tidak --> L["Tulis ciphertext ke file output"]
+    L --> Z([Selesai])
+```
+
+### Dekripsi
+
+Fungsi `decrypt_file()` menggunakan private key `(n, d)`:
+
+```mermaid
+flowchart TD
+    A([Mulai]) --> B["Baca private key (n, d)"]
+    B --> C["k = ukuran n dalam byte"]
+    C --> D["Baca seluruh file cipher sebagai bytes"]
+    D --> E{"Ukuran file > 0 dan<br/>kelipatan k?"}
+    E -- Tidak --> X1(["Error: ukuran file cipher<br/>tidak sesuai dengan kunci"])
+    E -- Ya --> F["Ambil blok cipher berikutnya (k byte)"]
+    F --> G["Ubah blok bytes menjadi integer c"]
+    G --> H{"c < n?"}
+    H -- Tidak --> X2(["Error: blok cipher tidak valid"])
+    H -- Ya --> I["m = c^d mod n"]
+    I --> J["Ubah m menjadi k byte"]
+    J --> K{"Padding valid?<br/>(diawali 00 02, PS >= 8 byte)"}
+    K -- Tidak --> X3(["Error: kunci salah atau file rusak"])
+    K -- Ya --> L["Buang padding, ambil data asli<br/>lalu tambahkan ke output"]
+    L --> M{"Masih ada blok?"}
+    M -- Ya --> F
+    M -- Tidak --> N["Tulis data asli ke file output"]
+    N --> Z([Selesai])
+```
+
 ## Struktur Proyek
 
 ```text
